@@ -6,7 +6,7 @@ import { Document } from "@/data/documents";
 interface SearchViewProps {
     query: string;
     onBack: () => void;
-    onViewDoc: (id: string) => void;
+    onViewDoc: (id: string, bboxes?: BoundingBox[]) => void;
 }
 
 interface BoundingBox {
@@ -137,44 +137,49 @@ export default function SearchView({ query, onBack, onViewDoc }: SearchViewProps
                     {selectedDoc ? (
                         <div className="flex flex-col h-full">
                             {/* Image Container with BBoxes */}
-                            <div className="relative flex-1 bg-gray-100 overflow-hidden flex items-center justify-center p-4">
-                                <div className="relative max-h-full max-w-full shadow-lg">
-                                    <img
-                                        src={selectedDoc.fileUrl}
-                                        alt="Evidence"
-                                        className="max-h-full max-w-full object-contain"
-                                    />
-                                    {/* Bounding Boxes Overlay */}
-                                    {activeBBoxes.map((box, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="absolute border-2 border-blue-500 bg-blue-500/20"
-                                            style={{
-                                                top: `${box.y}% `,
-                                                left: `${box.x}% `,
-                                                width: `${box.width}% `,
-                                                height: `${box.height}% `
-                                            }}
-                                        >
-                                            {box.label && (
-                                                <span className="absolute -top-6 left-0 bg-blue-600 text-white text-xs px-2 py-0.5 rounded shadow-sm whitespace-nowrap">
-                                                    {box.label}
-                                                </span>
-                                            )}
-                                        </div>
-                                    ))}
+                            <div className="shrink-0 bg-gray-100 p-6 flex items-center justify-center border-b border-gray-200" style={{ height: '500px' }}>
+                                <div className="relative h-full w-full flex items-center justify-center">
+                                    {/* Wrapper to ensure bboxes align with natural image size */}
+                                    <div className="relative h-auto w-auto max-h-full max-w-full inline-block shadow-lg">
+                                        <img
+                                            src={selectedDoc.fileUrl}
+                                            alt="Evidence"
+                                            className="block max-h-full max-w-full object-contain cursor-zoom-in"
+                                            style={{ maxHeight: '452px' }} // Height of parent (500) - padding (48) approx
+                                            onClick={() => onViewDoc(selectedDoc.id, activeBBoxes)}
+                                        />
+                                        {/* Bounding Boxes Overlay */}
+                                        {activeBBoxes.map((box, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="absolute border-2 border-blue-500 bg-blue-500/20 z-10 pointer-events-none"
+                                                style={{
+                                                    top: `${box.y}%`,
+                                                    left: `${box.x}%`,
+                                                    width: `${box.width}%`,
+                                                    height: `${box.height}%`
+                                                }}
+                                            >
+                                                {box.label && (
+                                                    <span className="absolute -top-6 left-0 bg-blue-600 text-white text-xs px-2 py-0.5 rounded shadow-sm whitespace-nowrap">
+                                                        {box.label}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Metadata / Details Panel (Scrollable) */}
-                            <div className="h-1/3 border-t border-gray-200 bg-white p-6 overflow-y-auto">
+                            <div className="flex-1 bg-white p-6 overflow-y-auto">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-xl font-bold text-gray-900">{selectedDoc.primaryEntity}</h2>
                                         <p className="text-gray-500">{selectedDoc.type} • {selectedDoc.totalValue} • {selectedDoc.primaryDate}</p>
                                     </div>
                                     <button
-                                        onClick={() => onViewDoc(selectedDoc.id)}
+                                        onClick={() => onViewDoc(selectedDoc.id, activeBBoxes)}
                                         className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1"
                                     >
                                         Full Details

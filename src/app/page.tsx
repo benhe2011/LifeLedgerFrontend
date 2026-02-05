@@ -10,9 +10,14 @@ import SearchView from "@/components/views/SearchView";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [viewingDocId, setViewingDocId] = useState<string | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<{ id: string; bboxes?: any[] } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [previousTab, setPreviousTab] = useState("dashboard");
+
+  const handleOpenDoc = (id: string, bboxes?: any[]) => {
+    setViewingDoc({ id, bboxes });
+  };
+
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -39,22 +44,26 @@ export default function Home() {
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
       <Sidebar activeTab={activeTab === "search" ? previousTab : activeTab} onTabChange={setActiveTab} />
 
-      {viewingDocId && (
-        <DocumentViewer documentId={viewingDocId} onClose={() => setViewingDocId(null)} />
+      {viewingDoc && (
+        <DocumentViewer
+          documentId={viewingDoc.id}
+          highlightBoxes={viewingDoc.bboxes}
+          onClose={() => setViewingDoc(null)}
+        />
       )}
 
       <div className="flex flex-1 flex-col min-w-0">
         <TopBar onSearch={handleSearch} />
 
         <main className="flex-1 overflow-hidden">
-          {activeTab === "dashboard" && <DashboardView onViewDoc={setViewingDocId} />}
+          {activeTab === "dashboard" && <DashboardView onViewDoc={handleOpenDoc} />}
 
           {["browse", "receipts", "subscriptions"].includes(activeTab) && (
-            <BrowseView key={activeTab} initialFilter={getBrowseFilter()} onViewDoc={setViewingDocId} />
+            <BrowseView key={activeTab} initialFilter={getBrowseFilter()} onViewDoc={handleOpenDoc} />
           )}
 
           {activeTab === "search" && (
-            <SearchView query={searchQuery} onBack={handleBackFromSearch} onViewDoc={setViewingDocId} />
+            <SearchView query={searchQuery} onBack={handleBackFromSearch} onViewDoc={handleOpenDoc} />
           )}
 
           {activeTab === "warranties" && (

@@ -5,10 +5,15 @@ import { documents } from "@/data/documents";
 interface DocumentViewerProps {
     documentId: string;
     onClose: () => void;
+    highlightBoxes?: { x: number; y: number; width: number; height: number; label?: string }[];
 }
 
-export default function DocumentViewer({ documentId, onClose }: DocumentViewerProps) {
+export default function DocumentViewer({ documentId, onClose, highlightBoxes }: DocumentViewerProps) {
     const [currentDocId, setCurrentDocId] = useState(documentId);
+    // ...
+
+    // Only show boxes if we are on the initial doc (since boxes are specific to it)
+    const showBoxes = highlightBoxes && currentDocId === documentId;
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +92,25 @@ export default function DocumentViewer({ documentId, onClose }: DocumentViewerPr
                             alt={currentDoc.primaryEntity}
                             className="max-h-[85vh] max-w-full object-contain shadow-2xl"
                         />
+                        {/* Overlay Boxes */}
+                        {showBoxes && highlightBoxes.map((box, idx) => (
+                            <div
+                                key={idx}
+                                className="absolute border-2 border-blue-500 bg-blue-500/20 z-10"
+                                style={{
+                                    top: `${box.y}%`,
+                                    left: `${box.x}%`,
+                                    width: `${box.width}%`,
+                                    height: `${box.height}%`
+                                }}
+                            >
+                                {box.label && (
+                                    <span className="absolute -top-8 left-0 bg-blue-600 text-white text-lg px-2 py-0.5 rounded shadow-sm whitespace-nowrap">
+                                        {box.label}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
                     </div>
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-xs pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to Zoom
@@ -98,8 +122,8 @@ export default function DocumentViewer({ documentId, onClose }: DocumentViewerPr
                     <div>
                         <div className="flex justify-between items-start mb-2">
                             <div className={`text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wide ${currentDoc.type === "Receipt" ? "bg-green-100 text-green-700" :
-                                    currentDoc.type === "Subscription" ? "bg-purple-100 text-purple-700" :
-                                        "bg-red-100 text-red-700"
+                                currentDoc.type === "Subscription" ? "bg-purple-100 text-purple-700" :
+                                    "bg-red-100 text-red-700"
                                 }`}>
                                 {currentDoc.type}
                             </div>
