@@ -1,9 +1,15 @@
-export default function Sidebar() {
+interface SidebarProps {
+    activeTab: string;
+    onTabChange: (tab: string) => void;
+}
+
+export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     const menuItems = [
-        { name: "Dashboard", href: "#" },
-        { name: "Receipts", href: "#" },
-        { name: "Subscriptions", href: "#" },
-        { name: "Warranties", href: "#" },
+        { name: "Dashboard", id: "dashboard", icon: "🏠" },
+        { name: "Browse", id: "browse", icon: "🔍" },
+        { name: "Receipts", id: "receipts", icon: "🧾" },
+        { name: "Subscriptions", id: "subscriptions", icon: "🔄" },
+        { name: "Warranties", id: "warranties", icon: "🛡️" },
     ];
 
     return (
@@ -13,13 +19,17 @@ export default function Sidebar() {
             </div>
             <nav className="space-y-1">
                 {menuItems.map((item) => (
-                    <a
-                        key={item.name}
-                        href={item.href}
-                        className="group flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    <button
+                        key={item.id}
+                        onClick={() => onTabChange(item.id)}
+                        className={`w-full group flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors ${activeTab === item.id
+                                ? "bg-blue-50 text-blue-700"
+                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                            }`}
                     >
+                        <span className="mr-3">{item.icon}</span>
                         {item.name}
-                    </a>
+                    </button>
                 ))}
             </nav>
         </aside>
