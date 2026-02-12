@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import HeroGallery from "@/components/ui/HeroGallery";
 import FeatureShowcase from "@/components/ui/FeatureShowcase";
 
@@ -38,6 +39,8 @@ export default function Home() {
 
       {/* Feature showcase — dark card */}
       <FeatureShowcase />
+
+      <Footer />
     </div>
   );
 }
