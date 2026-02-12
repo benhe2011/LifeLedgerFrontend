@@ -29,8 +29,8 @@ export default function LoginPage() {
     <div className="min-h-screen">
       <Navbar />
       <main className="flex flex-col items-center justify-center px-8 py-28">
-        <h1 className="text-3xl font-semibold text-fg-primary tracking-tight">Login</h1>
-        <p className="mt-2 text-fg-secondary">
+        <h1 className="text-display-lg font-serif text-fg-primary tracking-heading">Login</h1>
+        <p className="mt-3 text-body-lg text-fg-secondary">
           Sign in to access your dashboard.
         </p>
         <button

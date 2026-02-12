@@ -135,11 +135,11 @@ export default function DocumentViewer({ documentId, onClose, highlightBoxes }: 
                             </div>
                             <span className="text-sm text-fg-tertiary">{currentDoc.primaryDate}</span>
                         </div>
-                        <h2 className="text-2xl font-semibold text-fg-primary leading-tight tracking-tight">{currentDoc.primaryEntity}</h2>
+                        <h2 className="text-display font-semibold text-fg-primary tracking-heading">{currentDoc.primaryEntity}</h2>
                         {currentDoc.secondaryEntity && (
-                            <p className="text-fg-secondary font-medium">{currentDoc.secondaryEntity}</p>
+                            <p className="text-body-lg text-fg-secondary font-medium">{currentDoc.secondaryEntity}</p>
                         )}
-                        <div className="mt-4 text-3xl font-semibold text-fg-primary tabular-nums">{currentDoc.totalValue}</div>
+                        <div className="mt-4 text-display-lg font-semibold text-fg-primary tracking-heading tabular-nums">{currentDoc.totalValue}</div>
                     </div>
 
                     <div className="h-px bg-bg-tertiary"></div>

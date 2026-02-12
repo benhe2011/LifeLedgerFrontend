@@ -58,38 +58,63 @@ Accent colors remain consistent across themes — sage reads well on both light 
 
 ## 2. Typography
 
-### Font Stack
+### Font Stack — Three-Font System
 
-Use **Geist Sans** (already loaded in layout) as the primary typeface. It's clean, geometric, and highly legible — similar in spirit to the typefaces used across all three inspiration sites.
+Inspired by Anthropic and Wispr Flow, LifeLedger uses distinct typefaces for different roles. The contrast between serif display headings and sans-serif body text creates immediate visual hierarchy and an editorial, premium feel.
 
-- **Primary:** `var(--font-geist-sans)` — all UI text
-- **Monospace:** `var(--font-geist-mono)` — extracted data, amounts, dates, code-like content
+| Font | Variable | Tailwind | Role |
+|---|---|---|---|
+| **Instrument Serif** | `--font-instrument-serif` | `font-serif` | Hero headlines and page titles (`<h1>` on public pages). Only weight 400 — the serif design itself carries enough visual weight. |
+| **Geist Sans** | `--font-geist-sans` | `font-sans` | Body text, UI elements, navigation, buttons, form labels, dashboard headings. The workhorse typeface. |
+| **Geist Mono** | `--font-geist-mono` | `font-mono` | Extracted data, amounts, dates, merchant names. Signals "this came from your screenshot." |
 
-### Type Scale
+### When to Use Serif vs Sans
 
-A modular scale based on `1rem = 16px`, using Tailwind's built-in sizing. Headings should feel substantial without shouting.
+- **Serif (`font-serif`):** Only for `<h1>` page-level headings on public-facing pages (landing, about, login). These are the "editorial" moments — large, warm, distinctive.
+- **Sans (`font-sans`):** Everything else — dashboard headings, component headings (DocumentViewer, cards), navigation, body text, buttons. This keeps the app UI clean and functional.
+- **Mono (`font-mono`):** Extracted values (amounts, dates, merchant names) wherever they appear in cards, the viewer panel, or search results.
 
-| Role | Class | Size | Weight | Tracking |
-|---|---|---|---|---|
-| Display | `text-5xl` / `text-6xl` | 48–60px | `font-semibold` (600) | `tracking-tight` |
-| H1 | `text-4xl` | 36px | `font-semibold` (600) | `tracking-tight` |
-| H2 | `text-2xl` | 24px | `font-semibold` (600) | `tracking-tight` |
-| H3 | `text-xl` | 20px | `font-medium` (500) | — |
+### Fluid Type Scale
+
+Inspired by Anthropic's `clamp()`-based approach, display headings scale fluidly between viewport sizes. This eliminates breakpoint jumps and feels premium at every width. Registered as Tailwind utilities via `@theme inline`.
+
+| Role | Class | Range | Font | Weight | Tracking |
+|---|---|---|---|---|---|
+| Display 2XL | `text-display-2xl` | 48px → 80px | `font-serif` | 400 (normal) | `tracking-display` (-0.035em) |
+| Display XL | `text-display-xl` | 40px → 64px | `font-serif` | 400 (normal) | `tracking-display` (-0.035em) |
+| Display LG | `text-display-lg` | 32px → 48px | `font-serif` | 400 (normal) | `tracking-heading` (-0.025em) |
+| Display | `text-display` | 24px → 32px | `font-sans` | 600 (semibold) | `tracking-heading` (-0.025em) |
+| Body LG | `text-body-lg` | 18px → 20px | `font-normal` (400) | — |
 | Body | `text-base` | 16px | `font-normal` (400) | — |
 | Small | `text-sm` | 14px | `font-normal` (400) | — |
 | Caption | `text-xs` | 12px | `font-medium` (500) | `tracking-wide` |
 
-### Line Height
+Each display size includes a built-in line-height (via Tailwind's `--font-size-*--line-height` convention):
 
-- Headings: `leading-tight` (1.25)
-- Body text: `leading-relaxed` (1.625)
-- UI labels/buttons: `leading-normal` (1.5)
+| Size | Line Height |
+|---|---|
+| Display 2XL | 1.05 |
+| Display XL | 1.1 |
+| Display LG | 1.15 |
+| Display | 1.2 |
+| Body LG | 1.6 |
+
+### Custom Letter Spacing
+
+Two tracking tokens complement the fluid scale:
+
+| Token | Value | Class | Usage |
+|---|---|---|---|
+| `--letter-spacing-display` | `-0.035em` | `tracking-display` | Display 2XL and XL — tighter at large sizes |
+| `--letter-spacing-heading` | `-0.025em` | `tracking-heading` | Display LG and Display — moderate tightening |
 
 ### Guidelines
 
+- **Hierarchy through size, then color.** The fluid scale provides clear visual levels without needing weight changes. Use `font-semibold` (600) for headings and `font-normal` (400) for body — that's the only weight split needed.
 - **Maximum line width:** `max-w-prose` (65ch) for any paragraph of body text. Readability drops sharply beyond this.
-- **Hierarchy through weight, not size:** Prefer changing weight or color to jumping a full size level. Subtle differences build calm hierarchy.
+- **Lead paragraphs:** Use `text-body-lg` for the first paragraph under a hero or page heading. It gives breathing room between the large heading and standard body text.
 - **Monospace for data:** Extracted values (amounts, dates, merchant names) should use `font-mono` to signal "this came from your screenshot" — reinforcing trust in the extraction.
+- **No bold (700) for headings.** Semibold (600) paired with tight tracking creates the confident but warm feel. Bold is too heavy for the Geist typeface at display sizes.
 
 ---
 
