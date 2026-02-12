@@ -3,33 +3,25 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { login } from "@/lib/auth";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [verifyPassword, setVerifyPassword] = useState("");
 
-  const isFormValid = username.trim() !== "" && password.trim() !== "";
+  const isFormValid =
+    username.trim() !== "" &&
+    email.trim() !== "" &&
+    password.trim() !== "" &&
+    verifyPassword.trim() !== "";
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
-    setIsLoggingIn(true);
-    setTimeout(() => {
-      login();
-      router.push("/dashboard");
-    }, 1500);
+    router.push("/signing-up");
   };
-
-  if (isLoggingIn) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-bg-primary">
-        <p className="text-body-lg text-fg-secondary">Logging in via AWS Cognito...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-primary">
@@ -43,17 +35,17 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* Login Box — centered */}
+      {/* Sign Up Box — centered */}
       <div className="flex flex-1 flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <h1
             className="font-serif text-fg-primary tracking-heading text-center"
             style={{ fontSize: "clamp(2.5rem, 2rem + 2vw, 4rem)" }}
           >
-            Log in to LifeLedger
+            Create your account
           </h1>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-5">
+          <form onSubmit={handleSignUp} className="mt-8 space-y-5">
             {/* Username */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-fg-secondary mb-1.5">
@@ -64,8 +56,24 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                placeholder="Choose a username"
                 autoComplete="username"
+                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-fg-secondary mb-1.5">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                autoComplete="email"
                 className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
               />
             </div>
@@ -80,30 +88,46 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                autoComplete="current-password"
+                placeholder="Create a password"
+                autoComplete="new-password"
                 className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
               />
             </div>
 
-            {/* Login Button */}
+            {/* Verify Password */}
+            <div>
+              <label htmlFor="verify-password" className="block text-sm font-medium text-fg-secondary mb-1.5">
+                Verify Password
+              </label>
+              <input
+                id="verify-password"
+                type="password"
+                value={verifyPassword}
+                onChange={(e) => setVerifyPassword(e.target.value)}
+                placeholder="Confirm your password"
+                autoComplete="new-password"
+                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+              />
+            </div>
+
+            {/* Sign Up Button */}
             <button
               type="submit"
               disabled={!isFormValid}
               className="w-full rounded-xl px-5 py-2.5 font-medium transition-all duration-200 ease-out min-h-11 flex items-center justify-center bg-accent text-accent-fg hover:bg-accent-hover motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Log In
+              Sign Up
             </button>
           </form>
 
-          {/* Sign Up Link */}
+          {/* Login Link */}
           <p className="mt-6 text-center text-sm text-fg-tertiary">
-            Don&apos;t have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/signup"
+              href="/login"
               className="text-accent hover:text-accent-hover font-medium transition-colors duration-200"
             >
-              Sign Up
+              Log In
             </Link>
           </p>
         </div>
