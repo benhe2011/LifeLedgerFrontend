@@ -13,6 +13,7 @@ export default function SignUpPage() {
   const [verifyPassword, setVerifyPassword] = useState("");
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [error, setError] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const isFormValid =
     username.trim() !== "" &&
@@ -20,8 +21,23 @@ export default function SignUpPage() {
     password.trim() !== "" &&
     verifyPassword.trim() !== "";
 
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const fieldError = (field: string, value: string) => {
+    if (!touched[field] || value.trim() !== "") return null;
+    return "This field is required.";
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched({
+      username: true,
+      email: true,
+      password: true,
+      verifyPassword: true,
+    });
     if (!isFormValid) return;
     setError("");
 
@@ -39,6 +55,7 @@ export default function SignUpPage() {
         options: {
           userAttributes: {
             email: email.trim(),
+            preferred_username: username.trim(),
           },
         },
       });
@@ -59,11 +76,11 @@ export default function SignUpPage() {
             break;
           case "InvalidPasswordException":
             setError(
-              "Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, numbers, and symbols."
+              "Password does not meet the requirements listed below."
             );
             break;
           case "InvalidParameterException":
-            setError("Please check your input and try again.");
+            setError(err.message || "Please check your input and try again.");
             break;
           default:
             setError(err.message || "An unexpected error occurred.");
@@ -84,6 +101,13 @@ export default function SignUpPage() {
     );
   }
 
+  const inputClass = (field: string, value: string) =>
+    `w-full rounded-xl bg-bg-primary border px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light ${
+      touched[field] && value.trim() === ""
+        ? "border-danger"
+        : "border-bg-tertiary"
+    }`;
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-primary">
       {/* Logo — top left */}
@@ -91,6 +115,7 @@ export default function SignUpPage() {
         <Link
           href="/"
           className="text-xl font-semibold text-fg-primary tracking-tight"
+          aria-label="LifeLedger home"
         >
           LifeLedger
         </Link>
@@ -106,9 +131,12 @@ export default function SignUpPage() {
             Create your account
           </h1>
 
-          <form onSubmit={handleSignUp} className="mt-8 space-y-5">
+          <form onSubmit={handleSignUp} className="mt-8 space-y-5" noValidate>
             {error && (
-              <div className="rounded-xl bg-danger/10 border border-danger/20 px-4 py-3 text-sm text-danger">
+              <div
+                role="alert"
+                className="rounded-xl bg-danger/10 border border-danger/20 px-4 py-3 text-sm text-danger"
+              >
                 {error}
               </div>
             )}
@@ -119,17 +147,26 @@ export default function SignUpPage() {
                 htmlFor="username"
                 className="block text-sm font-medium text-fg-secondary mb-1.5"
               >
-                Username
+                Username <span className="text-danger">*</span>
               </label>
               <input
                 id="username"
                 type="text"
+                required
+                aria-required="true"
+                aria-invalid={touched.username && username.trim() === ""}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onBlur={() => handleBlur("username")}
                 placeholder="Choose a username"
                 autoComplete="username"
-                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+                className={inputClass("username", username)}
               />
+              {fieldError("username", username) && (
+                <p className="mt-1 text-xs text-danger" role="alert">
+                  {fieldError("username", username)}
+                </p>
+              )}
             </div>
 
             {/* Email */}
@@ -138,17 +175,26 @@ export default function SignUpPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-fg-secondary mb-1.5"
               >
-                Email
+                Email <span className="text-danger">*</span>
               </label>
               <input
                 id="email"
                 type="email"
+                required
+                aria-required="true"
+                aria-invalid={touched.email && email.trim() === ""}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => handleBlur("email")}
                 placeholder="Enter your email"
                 autoComplete="email"
-                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+                className={inputClass("email", email)}
               />
+              {fieldError("email", email) && (
+                <p className="mt-1 text-xs text-danger" role="alert">
+                  {fieldError("email", email)}
+                </p>
+              )}
             </div>
 
             {/* Password */}
@@ -157,17 +203,37 @@ export default function SignUpPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-fg-secondary mb-1.5"
               >
-                Password
+                Password <span className="text-danger">*</span>
               </label>
               <input
                 id="password"
                 type="password"
+                required
+                aria-required="true"
+                aria-invalid={touched.password && password.trim() === ""}
+                aria-describedby="password-requirements"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => handleBlur("password")}
                 placeholder="Create a password"
                 autoComplete="new-password"
-                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+                className={inputClass("password", password)}
               />
+              {fieldError("password", password) && (
+                <p className="mt-1 text-xs text-danger" role="alert">
+                  {fieldError("password", password)}
+                </p>
+              )}
+              <ul
+                id="password-requirements"
+                className="mt-2 space-y-0.5 text-xs text-fg-tertiary"
+              >
+                <li>At least 8 characters</li>
+                <li>At least one uppercase letter</li>
+                <li>At least one lowercase letter</li>
+                <li>At least one number</li>
+                <li>At least one special character (!@#$%^&* etc.)</li>
+              </ul>
             </div>
 
             {/* Verify Password */}
@@ -176,17 +242,28 @@ export default function SignUpPage() {
                 htmlFor="verify-password"
                 className="block text-sm font-medium text-fg-secondary mb-1.5"
               >
-                Verify Password
+                Verify Password <span className="text-danger">*</span>
               </label>
               <input
                 id="verify-password"
                 type="password"
+                required
+                aria-required="true"
+                aria-invalid={
+                  touched.verifyPassword && verifyPassword.trim() === ""
+                }
                 value={verifyPassword}
                 onChange={(e) => setVerifyPassword(e.target.value)}
+                onBlur={() => handleBlur("verifyPassword")}
                 placeholder="Confirm your password"
                 autoComplete="new-password"
-                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+                className={inputClass("verifyPassword", verifyPassword)}
               />
+              {fieldError("verifyPassword", verifyPassword) && (
+                <p className="mt-1 text-xs text-danger" role="alert">
+                  {fieldError("verifyPassword", verifyPassword)}
+                </p>
+              )}
             </div>
 
             {/* Sign Up Button */}

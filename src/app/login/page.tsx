@@ -11,11 +11,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const isFormValid = username.trim() !== "" && password.trim() !== "";
 
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const fieldError = (field: string, value: string) => {
+    if (!touched[field] || value.trim() !== "") return null;
+    return "This field is required.";
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched({ username: true, password: true });
     if (!isFormValid) return;
     setError("");
     setIsLoggingIn(true);
@@ -65,6 +76,13 @@ export default function LoginPage() {
     );
   }
 
+  const inputClass = (field: string, value: string) =>
+    `w-full rounded-xl bg-bg-primary border px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light ${
+      touched[field] && value.trim() === ""
+        ? "border-danger"
+        : "border-bg-tertiary"
+    }`;
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-primary">
       {/* Logo — top left */}
@@ -72,6 +90,7 @@ export default function LoginPage() {
         <Link
           href="/"
           className="text-xl font-semibold text-fg-primary tracking-tight"
+          aria-label="LifeLedger home"
         >
           LifeLedger
         </Link>
@@ -87,9 +106,12 @@ export default function LoginPage() {
             Log in to LifeLedger
           </h1>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-5">
+          <form onSubmit={handleLogin} className="mt-8 space-y-5" noValidate>
             {error && (
-              <div className="rounded-xl bg-danger/10 border border-danger/20 px-4 py-3 text-sm text-danger">
+              <div
+                role="alert"
+                className="rounded-xl bg-danger/10 border border-danger/20 px-4 py-3 text-sm text-danger"
+              >
                 {error}
               </div>
             )}
@@ -100,17 +122,26 @@ export default function LoginPage() {
                 htmlFor="username"
                 className="block text-sm font-medium text-fg-secondary mb-1.5"
               >
-                Username
+                Username <span className="text-danger">*</span>
               </label>
               <input
                 id="username"
                 type="text"
+                required
+                aria-required="true"
+                aria-invalid={touched.username && username.trim() === ""}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onBlur={() => handleBlur("username")}
                 placeholder="Enter your username"
                 autoComplete="username"
-                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+                className={inputClass("username", username)}
               />
+              {fieldError("username", username) && (
+                <p className="mt-1 text-xs text-danger" role="alert">
+                  {fieldError("username", username)}
+                </p>
+              )}
             </div>
 
             {/* Password */}
@@ -119,17 +150,26 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-fg-secondary mb-1.5"
               >
-                Password
+                Password <span className="text-danger">*</span>
               </label>
               <input
                 id="password"
                 type="password"
+                required
+                aria-required="true"
+                aria-invalid={touched.password && password.trim() === ""}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => handleBlur("password")}
                 placeholder="Enter your password"
                 autoComplete="current-password"
-                className="w-full rounded-xl bg-bg-primary border border-bg-tertiary px-4 py-2.5 text-fg-primary placeholder:text-fg-tertiary transition-colors duration-200 focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-light"
+                className={inputClass("password", password)}
               />
+              {fieldError("password", password) && (
+                <p className="mt-1 text-xs text-danger" role="alert">
+                  {fieldError("password", password)}
+                </p>
+              )}
             </div>
 
             {/* Forgot Password Link */}
