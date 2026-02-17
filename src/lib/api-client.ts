@@ -163,6 +163,7 @@ export interface RadarEvent {
   fileUrl: string;
   primaryEntity: string;
   date: string;
+  description?: string;  // e.g., "Payment due", "Subscription renews"
   totalValue: string;
 }
 
