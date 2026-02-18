@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Document } from "@/data/documents";
+import { Document } from "@/lib/types";
 import { getRelatedDocuments, type RelatedDocument } from "@/lib/api-client";
 
 interface DocumentViewerProps {
