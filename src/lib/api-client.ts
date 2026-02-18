@@ -178,3 +178,15 @@ export interface RadarResponse {
 export async function getRadarEvents(days: number = 30): Promise<RadarResponse> {
   return apiCall<RadarResponse>(`/radar?days=${days}`);
 }
+
+/**
+ * Submit manual review for a "Needs Review" document.
+ * Updates doc_text with the user's note (or "[Reviewed]" if empty).
+ */
+export async function reviewDocument(docId: string, note: string): Promise<void> {
+  await apiCall(`/documents/${docId}/review`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note }),
+  });
+}

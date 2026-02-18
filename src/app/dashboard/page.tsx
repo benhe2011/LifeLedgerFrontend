@@ -6,8 +6,9 @@ import DashboardHeader from "@/components/layout/DashboardHeader";
 import EventCard from "@/components/ui/EventCard";
 import DocumentCard from "@/components/ui/DocumentCard";
 import DocumentViewer from "@/components/ui/DocumentViewer";
+import ReviewModal from "@/components/ui/ReviewModal";
 import EmptyState from "@/components/views/EmptyState";
-import { uploadAndProcess, getDocuments, deleteDocuments, getRadarEvents, type Document, type RadarEvent } from "@/lib/api-client";
+import { uploadAndProcess, getDocuments, deleteDocuments, getRadarEvents, reviewDocument, type Document, type RadarEvent } from "@/lib/api-client";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_PREFIXES = ["image/"];
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<FilterType>>(new Set());
   const [viewerDocId, setViewerDocId] = useState<string | null>(null);
+  const [reviewDocId, setReviewDocId] = useState<string | null>(null);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -98,6 +100,13 @@ export default function DashboardPage() {
       setIsDeleting(false);
     }
   }, [selectedIds]);
+
+  const handleReviewSubmit = useCallback(async (docId: string, note: string) => {
+    await reviewDocument(docId, note);
+    // Refresh documents to update status
+    const docs = await getDocuments();
+    setDocuments(docs);
+  }, []);
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -268,7 +277,13 @@ export default function DashboardPage() {
                   <DocumentCard
                     key={doc.id}
                     {...doc}
-                    onClick={() => setViewerDocId(doc.id)}
+                    onClick={() => {
+                      if (doc.status === "Needs Review") {
+                        setReviewDocId(doc.id);
+                      } else {
+                        setViewerDocId(doc.id);
+                      }
+                    }}
                     isSelectMode={isSelectMode}
                     isSelected={selectedIds.has(doc.id)}
                     onSelect={handleSelectDocument}
@@ -307,6 +322,18 @@ export default function DashboardPage() {
           documents={documents}
         />
       )}
+
+      {/* Review Modal for "Needs Review" documents */}
+      {reviewDocId && (() => {
+        const doc = documents.find(d => d.id === reviewDocId);
+        return doc ? (
+          <ReviewModal
+            document={doc}
+            onClose={() => setReviewDocId(null)}
+            onSubmit={handleReviewSubmit}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }
