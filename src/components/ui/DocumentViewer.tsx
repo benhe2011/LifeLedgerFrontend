@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Document } from "@/data/documents";
+import { getRelatedDocuments, type RelatedDocument } from "@/lib/api-client";
 
 interface DocumentViewerProps {
     documentId: string;
@@ -10,6 +11,8 @@ interface DocumentViewerProps {
 
 export default function DocumentViewer({ documentId, onClose, documents, highlightBoxes }: DocumentViewerProps) {
     const [currentDocId, setCurrentDocId] = useState(documentId);
+    const [relatedDocs, setRelatedDocs] = useState<RelatedDocument[]>([]);
+    const [loadingRelated, setLoadingRelated] = useState(false);
 
     // Only show boxes if we are on the initial doc (since boxes are specific to it)
     const showBoxes = highlightBoxes && currentDocId === documentId;
@@ -22,6 +25,23 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
     // Reset zoom when doc changes
     useEffect(() => {
         setScale(1);
+    }, [currentDocId]);
+
+    // Fetch related documents when currentDocId changes
+    useEffect(() => {
+        async function fetchRelated() {
+            setLoadingRelated(true);
+            try {
+                const related = await getRelatedDocuments(currentDocId, 4);
+                setRelatedDocs(related);
+            } catch (e) {
+                console.error("Failed to fetch related docs:", e);
+                setRelatedDocs([]);
+            } finally {
+                setLoadingRelated(false);
+            }
+        }
+        fetchRelated();
     }, [currentDocId]);
 
     if (!currentDoc) return null;
@@ -182,6 +202,45 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                                 ))}
                             </ul>
                         </div>
+                    )}
+
+                    {/* Related Documents */}
+                    {(loadingRelated || relatedDocs.length > 0) && (
+                        <>
+                            <div className="h-px bg-bg-tertiary"></div>
+                            <div className="flex flex-col gap-3">
+                                <h3 className="text-xs font-bold text-fg-tertiary uppercase tracking-wider">
+                                    Related Documents
+                                </h3>
+                                {loadingRelated ? (
+                                    <div className="text-sm text-fg-tertiary">Loading...</div>
+                                ) : (
+                                    <div className="flex flex-col gap-2">
+                                        {relatedDocs.map((doc) => (
+                                            <button
+                                                key={doc.id}
+                                                onClick={() => setCurrentDocId(doc.id)}
+                                                className="flex items-center gap-3 p-2 rounded-lg bg-bg-primary hover:bg-bg-tertiary/50 transition-colors text-left"
+                                            >
+                                                <img
+                                                    src={doc.fileUrl}
+                                                    alt=""
+                                                    className="w-12 h-12 object-cover rounded"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm text-fg-primary truncate">
+                                                        {doc.primaryEntity}
+                                                    </p>
+                                                    <p className="text-xs text-fg-tertiary">
+                                                        {doc.similarity}% match · {doc.type}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
                 </div>
             </div>

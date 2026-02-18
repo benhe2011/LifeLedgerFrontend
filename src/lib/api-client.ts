@@ -190,3 +190,17 @@ export async function reviewDocument(docId: string, note: string): Promise<void>
     body: JSON.stringify({ note }),
   });
 }
+
+export interface RelatedDocument extends Document {
+  similarity: number;  // 0-100 percentage
+}
+
+/**
+ * Get documents similar to the given document using vector similarity.
+ */
+export async function getRelatedDocuments(
+  docId: string,
+  limit: number = 4
+): Promise<RelatedDocument[]> {
+  return apiCall<RelatedDocument[]>(`/documents/${docId}/related?limit=${limit}`);
+}
