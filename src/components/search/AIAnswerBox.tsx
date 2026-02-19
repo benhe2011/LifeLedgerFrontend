@@ -56,7 +56,7 @@ export default function AIAnswerBox({ phase, answer, onDone }: AIAnswerBoxProps)
             />
           </svg>
           <h2 className="text-xs font-bold text-fg-tertiary uppercase tracking-wider">
-            AI Answer
+            Response
           </h2>
         </div>
 
