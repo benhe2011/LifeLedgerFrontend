@@ -92,6 +92,9 @@ export default function DashboardPage() {
       await deleteDocuments(Array.from(selectedIds));
       // Remove deleted documents from state
       setDocuments((prev) => prev.filter((doc) => !selectedIds.has(doc.id)));
+      // Refresh radar events (deleted doc may have had a radar event)
+      const radar = await getRadarEvents(30);
+      setRadarEvents(radar.events);
       setSelectedIds(new Set());
       setIsSelectMode(false);
     } catch (error) {
