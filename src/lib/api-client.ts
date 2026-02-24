@@ -57,7 +57,7 @@ export interface UploadAndProcessResponse {
   uploaded: UploadedDoc[];
   count: number;
   message: string;
-  rejected: RejectedFile[];
+  rejected?: RejectedFile[];
 }
 
 export type DocumentType = "Receipt" | "Subscription" | "Invoice" | "Fine" | "Form" | "Other";
@@ -74,9 +74,9 @@ export interface Document {
 }
 
 export interface SafetyInfo {
-  strategy: string;
+  strategy: "REFUSE_ONLY" | "REFUSE_REDIRECT" | "DEESCALATE_SUPPORT" | "ASK_CLARIFY_SAFE";
   message: string;
-  detail?: string;
+  detail?: string | null;
 }
 
 export interface GroundednessInfo {
@@ -88,15 +88,15 @@ export interface SearchResult {
   answer: string;
   documents: Document[];
   query: string;
-  safety?: SafetyInfo;
-  groundedness?: GroundednessInfo;
+  safety?: SafetyInfo | null;
+  groundedness?: GroundednessInfo | null;
 }
 
 export interface AskResponse {
   answer: string;
   sources: string[];
-  safety?: SafetyInfo;
-  groundedness?: GroundednessInfo;
+  safety?: SafetyInfo | null;
+  groundedness?: GroundednessInfo | null;
 }
 
 /**

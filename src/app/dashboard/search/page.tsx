@@ -6,7 +6,7 @@ import SearchHeader from "@/components/search/SearchHeader";
 import AIAnswerBox from "@/components/search/AIAnswerBox";
 import EvidenceSection from "@/components/search/EvidenceSection";
 import DocumentViewer from "@/components/ui/DocumentViewer";
-import { searchDocuments, regenerateAnswer, type Document } from "@/lib/api-client";
+import { searchDocuments, regenerateAnswer, type Document, type SafetyInfo, type GroundednessInfo } from "@/lib/api-client";
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -17,6 +17,8 @@ function SearchResults() {
   const [viewerDocId, setViewerDocId] = useState<string | null>(null);
   const [results, setResults] = useState<Document[]>([]);
   const [answer, setAnswer] = useState<string>("");
+  const [safety, setSafety] = useState<SafetyInfo | null>(null);
+  const [groundedness, setGroundedness] = useState<GroundednessInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
@@ -35,6 +37,8 @@ function SearchResults() {
       .then((result) => {
         setResults(result.documents);
         setAnswer(result.answer);
+        setSafety(result.safety ?? null);
+        setGroundedness(result.groundedness ?? null);
         setPhase("answering");
       })
       .catch((err) => {
@@ -53,6 +57,8 @@ function SearchResults() {
     try {
       const result = await regenerateAnswer(query, answer);
       setAnswer(result.answer);
+      setSafety(result.safety ?? null);
+      setGroundedness(result.groundedness ?? null);
       setPhase("answering");
     } catch (err) {
       console.error("Regenerate failed:", err);
@@ -82,6 +88,8 @@ function SearchResults() {
               onDone={handleDone}
               onRegenerate={handleRegenerate}
               isRegenerating={isRegenerating}
+              safety={safety}
+              groundedness={groundedness}
             />
             <EvidenceSection
               documents={results}
