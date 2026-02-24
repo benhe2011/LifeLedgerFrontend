@@ -142,8 +142,14 @@ export default function DashboardPage() {
     let uploadSucceeded = false;
     try {
       // Upload and process all files at once
-      await uploadAndProcess(validFiles);
+      const uploadResult = await uploadAndProcess(validFiles);
       uploadSucceeded = true;
+
+      // Notify user about rejected files (content safety)
+      if (uploadResult.rejected && uploadResult.rejected.length > 0) {
+        const names = uploadResult.rejected.map((r) => r.filename).join(", ");
+        alert(`Some files were rejected for safety reasons: ${names}`);
+      }
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Upload failed. Please try again.");

@@ -48,10 +48,16 @@ export interface UploadedDoc {
   status: string;
 }
 
+export interface RejectedFile {
+  filename: string;
+  message: string;
+}
+
 export interface UploadAndProcessResponse {
   uploaded: UploadedDoc[];
   count: number;
   message: string;
+  rejected: RejectedFile[];
 }
 
 export type DocumentType = "Receipt" | "Subscription" | "Invoice" | "Fine" | "Form" | "Other";
@@ -67,15 +73,30 @@ export interface Document {
   totalValue: string;
 }
 
+export interface SafetyInfo {
+  strategy: string;
+  message: string;
+  detail?: string;
+}
+
+export interface GroundednessInfo {
+  ungrounded_pct: number;
+  message: string;
+}
+
 export interface SearchResult {
   answer: string;
   documents: Document[];
   query: string;
+  safety?: SafetyInfo;
+  groundedness?: GroundednessInfo;
 }
 
 export interface AskResponse {
   answer: string;
   sources: string[];
+  safety?: SafetyInfo;
+  groundedness?: GroundednessInfo;
 }
 
 /**
@@ -228,11 +249,17 @@ export async function getDocument(docId: string): Promise<DocumentDetail> {
  * Regenerate AI answer for a search query.
  * Logs the rejected answer for quality tracking.
  */
+export interface RegenerateResult {
+  answer: string;
+  safety?: SafetyInfo;
+  groundedness?: GroundednessInfo;
+}
+
 export async function regenerateAnswer(
   query: string,
   rejectedAnswer: string
-): Promise<{ answer: string }> {
-  return apiCall<{ answer: string }>("/regenerate", {
+): Promise<RegenerateResult> {
+  return apiCall<RegenerateResult>("/regenerate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, rejected_answer: rejectedAnswer }),
