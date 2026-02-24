@@ -48,10 +48,16 @@ export interface UploadedDoc {
   status: string;
 }
 
+export interface RejectedFile {
+  filename: string;
+  message: string;
+}
+
 export interface UploadAndProcessResponse {
   uploaded: UploadedDoc[];
   count: number;
   message: string;
+  rejected?: RejectedFile[];
 }
 
 export type DocumentType = "Receipt" | "Subscription" | "Invoice" | "Fine" | "Form" | "Other";
