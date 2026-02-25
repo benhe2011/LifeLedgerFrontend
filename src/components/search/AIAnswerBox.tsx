@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
 import type { SafetyInfo, GroundednessInfo } from "@/lib/api-client";
 
 interface AIAnswerBoxProps {
@@ -123,12 +124,24 @@ export default function AIAnswerBox({ phase, answer, onDone, onRegenerate, isReg
           {phase !== "thinking" && !isSafetyBlock && (
             <>
               <div className="animate-fade-in">
-                <p className="text-body-lg text-fg-primary leading-relaxed">
-                  {displayedText}
+                <div className="text-body-lg text-fg-primary leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="mb-2">{children}</p>,
+                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      ul: ({ children }) => <ul className="list-disc pl-5 mb-2">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal pl-5 mb-2">{children}</ol>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                      h3: ({ children }) => <h3 className="font-semibold mt-3 mb-1">{children}</h3>,
+                      code: ({ children }) => <code className="bg-bg-tertiary px-1.5 py-0.5 rounded text-sm">{children}</code>,
+                    }}
+                  >
+                    {displayedText}
+                  </ReactMarkdown>
                   {phase === "answering" && (
                     <span className="inline-block w-[2px] h-[16px] bg-accent ml-0.5 align-middle animate-blink" />
                   )}
-                </p>
+                </div>
                 {phase === "done" && onRegenerate && (
                   <button
                     onClick={onRegenerate}
