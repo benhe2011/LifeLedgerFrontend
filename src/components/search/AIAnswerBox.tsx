@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { SafetyInfo, GroundednessInfo } from "@/lib/api-client";
 
 interface AIAnswerBoxProps {
@@ -126,6 +127,7 @@ export default function AIAnswerBox({ phase, answer, onDone, onRegenerate, isReg
               <div className="animate-fade-in">
                 <div className="text-body-lg text-fg-primary leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                     components={{
                       p: ({ children }) => <p className="mb-2">{children}</p>,
                       strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
@@ -134,6 +136,10 @@ export default function AIAnswerBox({ phase, answer, onDone, onRegenerate, isReg
                       li: ({ children }) => <li className="mb-1">{children}</li>,
                       h3: ({ children }) => <h3 className="font-semibold mt-3 mb-1">{children}</h3>,
                       code: ({ children }) => <code className="bg-bg-tertiary px-1.5 py-0.5 rounded text-sm">{children}</code>,
+                      table: ({ children }) => <div className="overflow-x-auto mb-2"><table className="w-full border-collapse text-sm">{children}</table></div>,
+                      thead: ({ children }) => <thead className="bg-bg-tertiary">{children}</thead>,
+                      th: ({ children }) => <th className="text-left font-semibold px-3 py-2 border-b border-bg-tertiary">{children}</th>,
+                      td: ({ children }) => <td className="px-3 py-2 border-b border-bg-tertiary/50">{children}</td>,
                     }}
                   >
                     {displayedText}
