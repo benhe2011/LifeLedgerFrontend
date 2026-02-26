@@ -207,6 +207,7 @@ export default function DashboardPage() {
     }
 
     setIsUploading(false);
+    setAnalyticsData(null); // Invalidate analytics cache so next open refreshes
   }, []);
 
   // Filter documents by active filter types
@@ -331,7 +332,10 @@ export default function DashboardPage() {
           {hasContent && (
             <section className="mb-8">
               <button
-                onClick={() => setShowInsights((prev) => !prev)}
+                onClick={() => setShowInsights((prev) => {
+                  if (!prev) setAnalyticsData(null); // Force refresh on reopen
+                  return !prev;
+                })}
                 className="flex items-center gap-2 w-full group"
               >
                 <h2 className="text-display font-semibold text-fg-primary tracking-heading">
