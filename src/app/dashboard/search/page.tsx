@@ -6,7 +6,7 @@ import SearchHeader from "@/components/search/SearchHeader";
 import AIAnswerBox from "@/components/search/AIAnswerBox";
 import EvidenceSection from "@/components/search/EvidenceSection";
 import DocumentViewer from "@/components/ui/DocumentViewer";
-import { searchDocuments, regenerateAnswer, type Document, type SafetyInfo, type GroundednessInfo } from "@/lib/api-client";
+import { searchDocuments, regenerateAnswer, type Document, type SafetyInfo, type GroundednessInfo, type ApiError } from "@/lib/api-client";
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -64,7 +64,13 @@ function SearchResults() {
       setGroundedness(result.groundedness ?? null);
       setPhase("answering");
     } catch (err) {
-      console.error("Regenerate failed:", err);
+      const apiErr = err as ApiError;
+      if (apiErr.status === 429) {
+        setError("Too many regenerate requests. Please wait a minute before trying again.");
+        setTimeout(() => setError(null), 5000);
+      } else {
+        console.error("Regenerate failed:", err);
+      }
     } finally {
       setIsRegenerating(false);
     }
