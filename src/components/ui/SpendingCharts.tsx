@@ -87,7 +87,7 @@ export default function SpendingCharts({ spending, recurring, trips }: SpendingC
                 width={60}
               />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Spending"]}
+                formatter={(value) => [formatCurrency(Number(value)), "Spending"]}
                 contentStyle={{
                   backgroundColor: "var(--bg-secondary)",
                   border: "1px solid var(--bg-tertiary)",
@@ -132,7 +132,7 @@ export default function SpendingCharts({ spending, recurring, trips }: SpendingC
                 tickLine={false}
               />
               <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Total"]}
+                formatter={(value) => [formatCurrency(Number(value)), "Total"]}
                 contentStyle={{
                   backgroundColor: "var(--bg-secondary)",
                   border: "1px solid var(--bg-tertiary)",
