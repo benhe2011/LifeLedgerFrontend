@@ -8,7 +8,8 @@ import DocumentCard from "@/components/ui/DocumentCard";
 import DocumentViewer from "@/components/ui/DocumentViewer";
 import ReviewModal from "@/components/ui/ReviewModal";
 import EmptyState from "@/components/views/EmptyState";
-import { uploadAndProcess, getDocuments, deleteDocuments, getRadarEvents, reviewDocument, type Document, type RadarEvent, type RejectedFile } from "@/lib/api-client";
+import SpendingCharts from "@/components/ui/SpendingCharts";
+import { uploadAndProcess, getDocuments, deleteDocuments, getRadarEvents, reviewDocument, getSpendingAnalytics, getRecurringCosts, getTrips, type Document, type RadarEvent, type RejectedFile, type SpendingAnalytics, type RecurringAnalytics, type TripAnalytics } from "@/lib/api-client";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_PREFIXES = ["image/"];
@@ -26,6 +27,9 @@ export default function DashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rejectedFiles, setRejectedFiles] = useState<RejectedFile[]>([]);
+  const [showInsights, setShowInsights] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<{ spending: SpendingAnalytics; recurring: RecurringAnalytics; trips: TripAnalytics } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load documents and radar events on mount
@@ -46,6 +50,17 @@ export default function DashboardPage() {
     }
     loadData();
   }, []);
+
+  // Lazy-load analytics when insights section is opened
+  useEffect(() => {
+    if (showInsights && !analyticsData && !analyticsLoading) {
+      setAnalyticsLoading(true);
+      Promise.all([getSpendingAnalytics(), getRecurringCosts(), getTrips()])
+        .then(([spending, recurring, trips]) => setAnalyticsData({ spending, recurring, trips }))
+        .catch((err) => console.error("Failed to load analytics:", err))
+        .finally(() => setAnalyticsLoading(false));
+    }
+  }, [showInsights, analyticsData, analyticsLoading]);
 
   const handleFilterToggle = useCallback((filter: FilterType) => {
     setActiveFilters((prev) => {
@@ -309,6 +324,44 @@ export default function DashboardPage() {
                   </button>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* Financial Insights — collapsible, lazy-loaded */}
+          {hasContent && (
+            <section className="mb-8">
+              <button
+                onClick={() => setShowInsights((prev) => !prev)}
+                className="flex items-center gap-2 w-full group"
+              >
+                <h2 className="text-display font-semibold text-fg-primary tracking-heading">
+                  Financial Insights
+                </h2>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className={`w-5 h-5 text-fg-tertiary transition-transform duration-200 ${showInsights ? "rotate-180" : ""}`}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {showInsights && (
+                analyticsLoading ? (
+                  <div className="mt-4 flex items-center gap-2 text-fg-tertiary">
+                    <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">Loading analytics...</span>
+                  </div>
+                ) : analyticsData ? (
+                  <SpendingCharts
+                    spending={analyticsData.spending}
+                    recurring={analyticsData.recurring}
+                    trips={analyticsData.trips}
+                  />
+                ) : null
+              )}
             </section>
           )}
 

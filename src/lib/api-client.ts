@@ -5,6 +5,10 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export interface ApiError extends Error {
+  status?: number;
+}
+
 // Token getter - set by AuthProvider on mount
 let _getToken: (() => Promise<string | null>) | null = null;
 
@@ -33,8 +37,10 @@ async function apiCall<T>(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Request failed" }));
-    throw new Error(error.error || `API error: ${res.status}`);
+    const error = await res.json().catch(() => ({ detail: "Request failed" }));
+    const err = new Error(error.detail || error.error || `API error: ${res.status}`);
+    (err as ApiError).status = res.status;
+    throw err;
   }
 
   return res.json();
@@ -264,4 +270,83 @@ export async function regenerateAnswer(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, rejected_answer: rejectedAnswer }),
   });
+}
+
+// Analytics types
+export interface MerchantSpending {
+  merchant: string;
+  total: number;
+  count: number;
+}
+
+export interface MonthlySpending {
+  month: string;
+  total: number;
+}
+
+export interface SpendingAnalytics {
+  by_merchant: MerchantSpending[];
+  by_month: MonthlySpending[];
+  total: number;
+}
+
+export interface RecurringCost {
+  merchant: string;
+  is_recurring: boolean;
+  interval_days: number;
+  monthly_estimate: number;
+  annual_estimate: number;
+  next_renewal_date: string;
+  last_date: string;
+  transaction_count: number;
+}
+
+export interface RecurringAnalytics {
+  recurring: RecurringCost[];
+  total_monthly: number;
+  total_annual: number;
+  count: number;
+}
+
+export interface TripDocument {
+  doc_id: number;
+  merchant: string;
+  date: string;
+  amount: number;
+}
+
+export interface Trip {
+  start_date: string;
+  end_date: string;
+  total_cost: number;
+  document_count: number;
+  location_hint: string | null;
+  documents: TripDocument[];
+}
+
+export interface TripAnalytics {
+  trips: Trip[];
+  total_trip_spending: number;
+  count: number;
+}
+
+/**
+ * Get spending analytics: by merchant and by month.
+ */
+export async function getSpendingAnalytics(months: number = 6): Promise<SpendingAnalytics> {
+  return apiCall<SpendingAnalytics>(`/analytics/spending?months=${months}`);
+}
+
+/**
+ * Get detected recurring subscriptions and charges.
+ */
+export async function getRecurringCosts(): Promise<RecurringAnalytics> {
+  return apiCall<RecurringAnalytics>("/analytics/recurring");
+}
+
+/**
+ * Get detected travel trips grouped by date proximity.
+ */
+export async function getTrips(): Promise<TripAnalytics> {
+  return apiCall<TripAnalytics>("/analytics/trips");
 }
