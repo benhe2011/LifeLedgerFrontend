@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [showInsights, setShowInsights] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<{ spending: SpendingAnalytics; recurring: RecurringAnalytics; trips: TripAnalytics } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsMonths, setAnalyticsMonths] = useState(12); // default 1 year
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load documents and radar events on mount
@@ -55,12 +56,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (showInsights && !analyticsData && !analyticsLoading) {
       setAnalyticsLoading(true);
-      Promise.all([getSpendingAnalytics(), getRecurringCosts(), getTrips()])
+      Promise.all([getSpendingAnalytics(analyticsMonths), getRecurringCosts(), getTrips()])
         .then(([spending, recurring, trips]) => setAnalyticsData({ spending, recurring, trips }))
         .catch((err) => console.error("Failed to load analytics:", err))
         .finally(() => setAnalyticsLoading(false));
     }
-  }, [showInsights, analyticsData, analyticsLoading]);
+  }, [showInsights, analyticsData, analyticsLoading, analyticsMonths]);
 
   const handleFilterToggle = useCallback((filter: FilterType) => {
     setActiveFilters((prev) => {
@@ -357,6 +358,30 @@ export default function DashboardPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
               </button>
+              {showInsights && (
+                <div className="flex gap-2 mt-3">
+                  {[
+                    { label: "1M", months: 1 },
+                    { label: "1Y", months: 12 },
+                    { label: "5Y", months: 60 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.months}
+                      onClick={() => {
+                        setAnalyticsMonths(opt.months);
+                        setAnalyticsData(null);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                        analyticsMonths === opt.months
+                          ? "bg-accent text-white"
+                          : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               {showInsights && (
                 analyticsLoading ? (
                   <div className="mt-4 flex items-center gap-2 text-fg-tertiary">
