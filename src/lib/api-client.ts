@@ -95,8 +95,20 @@ export interface SearchResult {
   documents: Document[];
   query: string;
   session_id: number;
+  conversation_id: number;
   safety?: SafetyInfo | null;
   groundedness?: GroundednessInfo | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  documents?: Document[];
+  sessionId?: number;
+  safety?: SafetyInfo | null;
+  groundedness?: GroundednessInfo | null;
+  isLoading?: boolean;
 }
 
 export interface AskResponse {
@@ -146,11 +158,11 @@ export async function getDocuments(): Promise<Document[]> {
 /**
  * Search documents with semantic similarity.
  */
-export async function searchDocuments(query: string): Promise<SearchResult> {
+export async function searchDocuments(query: string, conversationId?: number): Promise<SearchResult> {
   return apiCall<SearchResult>("/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, conversation_id: conversationId ?? null }),
   });
 }
 
