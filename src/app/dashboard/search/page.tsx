@@ -3,9 +3,13 @@
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AIAnswerBox from "@/components/search/AIAnswerBox";
+import AgentChartRenderer from "@/components/search/AgentChartRenderer";
 import EvidenceSection from "@/components/search/EvidenceSection";
 import DocumentViewer from "@/components/ui/DocumentViewer";
 import { searchDocuments, regenerateAnswer, type ChatMessage, type ApiError } from "@/lib/api-client";
+
+const stripCitations = (text: string) =>
+  text.replace(/\s*<!--cited:.*?-->/g, "");
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -63,11 +67,12 @@ function SearchResults() {
       const assistantMsg: ChatMessage = {
         id: assistantMsgId,
         role: "assistant",
-        content: result.answer,
+        content: stripCitations(result.answer),
         documents: result.documents,
         sessionId: result.session_id,
         safety: result.safety ?? null,
         groundedness: result.groundedness ?? null,
+        chartData: result.chart_data ?? null,
         isLoading: false,
       };
 
@@ -112,7 +117,7 @@ function SearchResults() {
       const result = await regenerateAnswer(sessionId);
       setMessages(prev =>
         prev.map(m => m.id === msgId
-          ? { ...m, content: result.answer, safety: result.safety ?? null, groundedness: result.groundedness ?? null }
+          ? { ...m, content: stripCitations(result.answer), safety: result.safety ?? null, groundedness: result.groundedness ?? null, chartData: result.chart_data ?? null }
           : m
         )
       );
@@ -199,6 +204,10 @@ function SearchResults() {
                   safety={msg.safety}
                   groundedness={msg.groundedness}
                 />
+                {msg.chartData && msg.chartData.length > 0 &&
+                  (msg.id !== lastAssistantId || activePhase === "done") && (
+                    <AgentChartRenderer charts={msg.chartData} />
+                )}
                 {msg.documents && msg.documents.length > 0 && (
                   <EvidenceSection
                     documents={msg.documents}
