@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Document } from "@/lib/types";
 import { getRelatedDocuments, getDocument, type RelatedDocument, type OcrBlock } from "@/lib/api-client";
 
@@ -64,22 +64,23 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
     // OCR bounding box state
     const [ocrBlocks, setOcrBlocks] = useState<OcrBlock[]>([]);
     const [imgDimensions, setImgDimensions] = useState<{ width: number; height: number } | null>(null);
+    const [boxesVisible, setBoxesVisible] = useState(false);
 
-    // Only show boxes if we are on the initial doc (since boxes are specific to it)
-    const showBoxes = (highlightBoxes || (searchQuery && ocrBlocks.length > 0 && imgDimensions)) && currentDocId === documentId;
     const [scale, setScale] = useState(1);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Compute highlight boxes from search query + OCR blocks
-    const computedBoxes: HighlightBox[] = (() => {
+    const computedBoxes: HighlightBox[] = useMemo(() => {
         if (highlightBoxes) return highlightBoxes;
-        if (!searchQuery || !imgDimensions || ocrBlocks.length === 0) return [];
-        const filtered = filterBlocksByQuery(ocrBlocks, searchQuery);
-        return filtered.map(block => ({
+        if (!imgDimensions || ocrBlocks.length === 0) return [];
+        const blocks = searchQuery ? filterBlocksByQuery(ocrBlocks, searchQuery) : ocrBlocks;
+        return blocks.map(block => ({
             ...bboxToPercentRect(block.bbox, imgDimensions.width, imgDimensions.height),
             label: block.text,
         }));
-    })();
+    }, [highlightBoxes, imgDimensions, ocrBlocks, searchQuery]);
+
+    const showBoxes = boxesVisible && computedBoxes.length > 0 && currentDocId === documentId;
 
     const currentIndex = allDocs.findIndex(d => d.id === currentDocId);
     const currentDoc = allDocs[currentIndex];
@@ -90,9 +91,9 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
         setImgDimensions(null);
     }, [currentDocId]);
 
-    // Fetch OCR blocks when searchQuery is provided (for initial doc only)
+    // Always fetch OCR blocks eagerly so toggle is instant
     useEffect(() => {
-        if (!searchQuery || documentId !== currentDocId) {
+        if (documentId !== currentDocId) {
             setOcrBlocks([]);
             return;
         }
@@ -104,7 +105,7 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                 console.error("Failed to fetch ocr_blocks:", e);
                 setOcrBlocks([]);
             });
-    }, [searchQuery, documentId, currentDocId]);
+    }, [documentId, currentDocId]);
 
     // Handle image load to get natural dimensions
     const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -210,7 +211,7 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                         {showBoxes && computedBoxes.map((box, idx) => (
                             <div
                                 key={idx}
-                                className="absolute border-2 border-accent bg-accent/20 z-10"
+                                className="absolute border border-accent bg-accent/20 z-10 transition-opacity duration-200 hover:opacity-10"
                                 style={{
                                     top: `${box.y}%`,
                                     left: `${box.x}%`,
@@ -248,6 +249,19 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                     </div>
 
                     <div className="h-px bg-bg-tertiary"></div>
+
+                    {/* Evidence Highlights Toggle */}
+                    {computedBoxes.length > 0 && currentDocId === documentId && (
+                        <button
+                            onClick={() => setBoxesVisible(v => !v)}
+                            className="flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary transition-colors"
+                        >
+                            <div className={`w-8 h-4 rounded-full transition-colors ${boxesVisible ? 'bg-accent' : 'bg-bg-tertiary'}`}>
+                                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${boxesVisible ? 'translate-x-4' : 'translate-x-0'}`} />
+                            </div>
+                            Evidence Highlights
+                        </button>
+                    )}
 
                     {/* Meta Grid */}
                     <div className="grid grid-cols-2 gap-4">
