@@ -65,6 +65,7 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
     const [ocrBlocks, setOcrBlocks] = useState<OcrBlock[]>([]);
     const [imgDimensions, setImgDimensions] = useState<{ width: number; height: number } | null>(null);
     const [boxesVisible, setBoxesVisible] = useState(false);
+    const [isOcrLoading, setIsOcrLoading] = useState(true);
 
     const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -73,7 +74,7 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
     const computedBoxes: HighlightBox[] = useMemo(() => {
         if (highlightBoxes) return highlightBoxes;
         if (!imgDimensions || ocrBlocks.length === 0) return [];
-        const blocks = searchQuery ? filterBlocksByQuery(ocrBlocks, searchQuery) : ocrBlocks;
+        const blocks = ocrBlocks;
         return blocks.map(block => ({
             ...bboxToPercentRect(block.bbox, imgDimensions.width, imgDimensions.height),
             label: block.text,
@@ -93,13 +94,16 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
     // Always fetch OCR blocks eagerly so toggle is instant
     useEffect(() => {
         setOcrBlocks([]);
+        setIsOcrLoading(true);
         getDocument(currentDocId)
             .then((doc) => {
                 setOcrBlocks(doc.ocr_blocks || []);
+                setIsOcrLoading(false);
             })
             .catch((e) => {
                 console.error("Failed to fetch ocr_blocks:", e);
                 setOcrBlocks([]);
+                setIsOcrLoading(false);
             });
     }, [currentDocId]);
 
@@ -242,10 +246,14 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                     <div className="h-px bg-bg-tertiary"></div>
 
                     {/* Evidence Highlights Toggle */}
-                    {computedBoxes.length > 0 && (
+                    {(isOcrLoading || ocrBlocks.length > 0) && (
                         <button
                             onClick={() => setBoxesVisible(v => !v)}
-                            className="flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary transition-colors"
+                            className={`flex items-center gap-2 text-sm transition-colors ${
+                                isOcrLoading
+                                    ? 'text-fg-tertiary cursor-default'
+                                    : 'text-fg-secondary hover:text-fg-primary'
+                            }`}
                         >
                             <div className={`w-8 h-4 rounded-full transition-colors ${boxesVisible ? 'bg-accent' : 'bg-bg-tertiary'}`}>
                                 <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${boxesVisible ? 'translate-x-4' : 'translate-x-0'}`} />
