@@ -36,15 +36,6 @@ function bboxToPercentRect(
     };
 }
 
-// Filter OCR blocks that match any query term (case-insensitive)
-function filterBlocksByQuery(blocks: OcrBlock[], query: string): OcrBlock[] {
-    const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-    if (terms.length === 0) return [];
-    return blocks.filter(block => {
-        const text = block.text.toLowerCase();
-        return terms.some(term => text.includes(term));
-    });
-}
 
 export default function DocumentViewer({ documentId, onClose, documents, highlightBoxes, searchQuery }: DocumentViewerProps) {
     const [currentDocId, setCurrentDocId] = useState(documentId);
@@ -410,7 +401,7 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                                 }}
                             >
                                 {box.label && (
-                                    <span className={`absolute bg-accent text-accent-fg text-lg px-2 py-0.5 rounded shadow-sm whitespace-nowrap ${box.y < 8 ? 'top-full mt-1' : '-top-8'} ${box.x > 60 ? 'right-0' : 'left-0'}`}>
+                                    <span className={`absolute bg-accent text-accent-fg text-lg px-2 py-0.5 rounded shadow-sm max-w-[200px] truncate ${box.y < 8 ? 'top-full mt-1' : '-top-8'} ${box.x > 60 ? 'right-0' : 'left-0'}`}>
                                         {copiedIdx === idx ? "Copied!" : box.label}
                                     </span>
                                 )}
