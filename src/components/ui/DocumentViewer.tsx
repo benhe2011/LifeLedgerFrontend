@@ -18,7 +18,7 @@ interface DocumentViewerProps {
     searchQuery?: string;  // If provided, will highlight matching OCR regions
 }
 
-// Convert 4-point polygon to percentage-based rectangle
+// Convert 4-point polygon to percentage-based rectangle, clamped to image bounds
 function bboxToPercentRect(
     bbox: number[][],
     imgWidth: number,
@@ -28,14 +28,43 @@ function bboxToPercentRect(
     const maxX = Math.max(bbox[1][0], bbox[2][0]);
     const minY = Math.min(bbox[0][1], bbox[1][1]);
     const maxY = Math.max(bbox[2][1], bbox[3][1]);
+    const x = Math.max(0, Math.min(100, (minX / imgWidth) * 100));
+    const y = Math.max(0, Math.min(100, (minY / imgHeight) * 100));
     return {
-        x: (minX / imgWidth) * 100,
-        y: (minY / imgHeight) * 100,
-        width: ((maxX - minX) / imgWidth) * 100,
-        height: ((maxY - minY) / imgHeight) * 100,
+        x,
+        y,
+        width: Math.max(0, Math.min(100 - x, ((maxX - minX) / imgWidth) * 100)),
+        height: Math.max(0, Math.min(100 - y, ((maxY - minY) / imgHeight) * 100)),
     };
 }
 
+function OcrBoxOverlay({ boxes, copiedIdx, onCopy }: {
+    boxes: HighlightBox[];
+    copiedIdx: number | null;
+    onCopy: (idx: number, text: string) => void;
+}) {
+    return (
+        <>
+            {boxes.map((box, idx) => (
+                <div
+                    key={idx}
+                    className="absolute border border-accent bg-accent/20 z-10 transition-opacity duration-200 hover:opacity-10 cursor-pointer"
+                    style={{ top: `${box.y}%`, left: `${box.x}%`, width: `${box.width}%`, height: `${box.height}%` }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (box.label) onCopy(idx, box.label);
+                    }}
+                >
+                    {box.label && (
+                        <span className={`absolute bg-accent text-accent-fg text-lg px-2 py-0.5 rounded shadow-sm max-w-[200px] truncate ${box.y < 8 ? 'top-full mt-1' : '-top-8'} ${(box.x + box.width / 2) > 50 ? 'right-0' : 'left-0'}`}>
+                            {copiedIdx === idx ? "Copied!" : box.label}
+                        </span>
+                    )}
+                </div>
+            ))}
+        </>
+    );
+}
 
 export default function DocumentViewer({ documentId, onClose, documents, highlightBoxes, searchQuery }: DocumentViewerProps) {
     const [currentDocId, setCurrentDocId] = useState(documentId);
@@ -74,6 +103,12 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
     }, [highlightBoxes, imgDimensions, ocrBlocks, searchQuery]);
 
     const showBoxes = boxesVisible && computedBoxes.length > 0;
+
+    const handleCopy = (idx: number, text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedIdx(idx);
+        setTimeout(() => setCopiedIdx(null), 1200);
+    };
 
     const currentIndex = allDocs.findIndex(d => d.id === currentDocId);
     const currentDoc = allDocs[currentIndex];
@@ -190,32 +225,7 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                             onLoad={handleImageLoad}
                         />
                         {/* Overlay Boxes */}
-                        {showBoxes && computedBoxes.map((box, idx) => (
-                            <div
-                                key={idx}
-                                className="absolute border border-accent bg-accent/20 z-10 transition-opacity duration-200 hover:opacity-10 cursor-pointer"
-                                style={{
-                                    top: `${box.y}%`,
-                                    left: `${box.x}%`,
-                                    width: `${box.width}%`,
-                                    height: `${box.height}%`
-                                }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (box.label) {
-                                        navigator.clipboard.writeText(box.label);
-                                        setCopiedIdx(idx);
-                                        setTimeout(() => setCopiedIdx(null), 1200);
-                                    }
-                                }}
-                            >
-                                {box.label && (
-                                    <span className={`absolute bg-accent text-accent-fg text-lg px-2 py-0.5 rounded shadow-sm max-w-[200px] truncate ${box.y < 8 ? 'top-full mt-1' : '-top-8'} ${(box.x + box.width / 2) > 50 ? 'right-0' : 'left-0'}`}>
-                                        {copiedIdx === idx ? "Copied!" : box.label}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                        {showBoxes && <OcrBoxOverlay boxes={computedBoxes} copiedIdx={copiedIdx} onCopy={handleCopy} />}
                     </div>
                         {/* Mobile fullscreen tap button — hidden on md+ */}
                         <button
@@ -378,35 +388,10 @@ export default function DocumentViewer({ documentId, onClose, documents, highlig
                         <img
                             src={currentDoc.fileUrl}
                             alt={currentDoc.primaryEntity}
-                            className="max-h-[calc(100vh-32px)] max-w-[calc(100vw-32px)] object-contain"
+                            className="max-h-screen max-w-screen object-contain"
                             onLoad={handleImageLoad}
                         />
-                        {showBoxes && computedBoxes.map((box, idx) => (
-                            <div
-                                key={idx}
-                                className="absolute border border-accent bg-accent/20 z-10 transition-opacity duration-200 cursor-pointer"
-                                style={{
-                                    top: `${box.y}%`,
-                                    left: `${box.x}%`,
-                                    width: `${box.width}%`,
-                                    height: `${box.height}%`
-                                }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (box.label) {
-                                        navigator.clipboard.writeText(box.label);
-                                        setCopiedIdx(idx);
-                                        setTimeout(() => setCopiedIdx(null), 1200);
-                                    }
-                                }}
-                            >
-                                {box.label && (
-                                    <span className={`absolute bg-accent text-accent-fg text-lg px-2 py-0.5 rounded shadow-sm max-w-[200px] truncate ${box.y < 8 ? 'top-full mt-1' : '-top-8'} ${(box.x + box.width / 2) > 50 ? 'right-0' : 'left-0'}`}>
-                                        {copiedIdx === idx ? "Copied!" : box.label}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                        {showBoxes && <OcrBoxOverlay boxes={computedBoxes} copiedIdx={copiedIdx} onCopy={handleCopy} />}
                     </div>
                 </div>
             )}
