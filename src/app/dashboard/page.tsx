@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsMonths, setAnalyticsMonths] = useState(12); // default 1 year
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastSelectedIdx = useRef<number | null>(null);
 
   // Load documents and radar events on mount
   useEffect(() => {
@@ -63,6 +64,11 @@ export default function DashboardPage() {
     }
   }, [showInsights, analyticsData, analyticsLoading, analyticsMonths]);
 
+  // Filter documents by active filter types
+  const filteredDocuments = activeFilters.size === 0
+    ? documents
+    : documents.filter((doc) => activeFilters.has(doc.type as FilterType));
+
   const handleFilterToggle = useCallback((filter: FilterType) => {
     setActiveFilters((prev) => {
       const next = new Set(prev);
@@ -84,17 +90,35 @@ export default function DashboardPage() {
     setSelectedIds(new Set()); // Clear selection when toggling
   }, []);
 
-  const handleSelectDocument = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
+  const handleSelectDocument = useCallback((id: string, e?: React.MouseEvent) => {
+    const currentIdx = filteredDocuments.findIndex((d) => d.id === id);
+
+    if (e?.shiftKey && lastSelectedIdx.current !== null && currentIdx !== -1) {
+      const start = Math.min(lastSelectedIdx.current, currentIdx);
+      const end = Math.max(lastSelectedIdx.current, currentIdx);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) {
+          next.add(filteredDocuments[i].id);
+        }
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+    }
+
+    if (currentIdx !== -1) {
+      lastSelectedIdx.current = currentIdx;
+    }
+  }, [filteredDocuments]);
 
   const handleDeleteSelected = useCallback(async () => {
     if (selectedIds.size === 0) return;
@@ -219,10 +243,6 @@ export default function DashboardPage() {
     setAnalyticsData(null); // Invalidate analytics cache so next open refreshes
   }, []);
 
-  // Filter documents by active filter types
-  const filteredDocuments = activeFilters.size === 0
-    ? documents
-    : documents.filter((doc) => activeFilters.has(doc.type as FilterType));
 
   const hasContent = documents.length > 0;
 
