@@ -146,12 +146,34 @@ export default function DashboardPage() {
     }
   }, [selectedIds]);
 
+  // Shared polling loop: polls docs + radar every 5s, stops when isDone returns true or 12 polls
+  const startProcessingPoll = useCallback((isDone: (docs: Document[]) => boolean) => {
+    let pollCount = 0;
+    const interval = setInterval(async () => {
+      pollCount++;
+      if (pollCount >= 12) { clearInterval(interval); return; }
+      try {
+        const [docs, radar] = await Promise.all([getDocuments(), getRadarEvents(365)]);
+        setDocuments(docs);
+        setRadarEvents(radar.events);
+        if (isDone(docs)) {
+          clearInterval(interval);
+        } else {
+          pollCount = 0;
+        }
+      } catch { /* ignore */ }
+    }, 5000);
+  }, []);
+
   const handleReviewSubmit = useCallback(async (docId: string, note: string) => {
     await reviewDocument(docId, note);
-    // Refresh documents to update status
     const docs = await getDocuments();
     setDocuments(docs);
-  }, []);
+    startProcessingPoll((docs) => {
+      const reviewed = docs.find((d) => d.id === docId);
+      return reviewed?.radarProcessed !== false;
+    });
+  }, [startProcessingPoll]);
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -209,39 +231,15 @@ export default function DashboardPage() {
     }
 
     // Poll for document and radar updates until all processing is complete
-    // Keeps polling while any doc is still in OCR or awaiting radar crawl
     if (uploadSucceeded) {
-      let pollCount = 0;
-      const pollInterval = setInterval(async () => {
-        pollCount++;
-        if (pollCount >= 12) {
-          clearInterval(pollInterval);
-          return;
-        }
-        try {
-          const [docs, radar] = await Promise.all([
-            getDocuments(),
-            getRadarEvents(365),
-          ]);
-          setDocuments(docs);
-          setRadarEvents(radar.events);
-          const stillWorking = docs.some(
-            (d: any) => d.status === "Processing" || d.radarProcessed === false
-          );
-          if (stillWorking) {
-            pollCount = 0;
-          } else {
-            clearInterval(pollInterval);
-          }
-        } catch (e) {
-          // Silently ignore polling errors
-        }
-      }, 5000);
+      startProcessingPoll((docs) =>
+        !docs.some((d) => d.status === "Processing" || d.radarProcessed === false)
+      );
     }
 
     setIsUploading(false);
     setAnalyticsData(null); // Invalidate analytics cache so next open refreshes
-  }, []);
+  }, [startProcessingPoll]);
 
 
   const hasContent = documents.length > 0;
